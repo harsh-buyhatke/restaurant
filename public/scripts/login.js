@@ -10,10 +10,13 @@ function login(){
         headers: {
             'Content-type': 'application/json; charset=UTF-8'
         }
-    })
+    }).then(x => x.json())
     .then(response => {
-        if(typeof(response.url) != 'undefined'){
+        console.log(response)
+        if(response["yes"] === 1){
             window.location = '/profile'
+        }else if(response["yes"] === 2){
+            window.location = '/admin'
         }
     })
 }

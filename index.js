@@ -20,7 +20,7 @@ app.use(
     resave: false,
     secret: "thisisdemoproject",
     cookie: {
-      maxAge: 1000 * 60 * 5, // 5mins
+      maxAge: 1000 * 60 * 50, // 50mins
     },
     store: new FileStore({ logFn: function () {} }),
     saveUninitialized: false,
@@ -46,8 +46,8 @@ const encryptPassword = async (req, res, password) => {
   };
 
 const validEmail = (email) => {
-    return validator.validate(email);
-  };
+  return validator.validate(email);
+};
 
 // const dbCheckItem = (item) => { 
 //     return new Promise((res,rej) => {
@@ -91,6 +91,14 @@ app.get('/profile' , (req,res) => {
     return res.sendFile(__dirname + '/public/html/profile.html');
 })
 
+app.get('/admin' , (req,res) => {
+  return res.sendFile(__dirname + '/public/html/admin.html');
+})
+
+app.get('/pendingorders', (req, res) => {
+  return res.sendFile(__dirname + '\\public\\html\\pendingorders.html');
+})
+
 app.get('/scripts/login.js' , (req,res) => {
     return res.sendFile(__dirname + '\\public\\scripts\\login.js');
 })
@@ -105,6 +113,10 @@ app.get('/scripts/menu.js' , (req,res) => {
 
 app.get('/scripts/orderhistory.js', (req, res) => {
   return res.sendFile(__dirname + '\\public\\scripts\\orderhistory.js');
+})
+
+app.get('/scripts/pendingorders.js', (req, res) => {
+  return res.sendFile(__dirname + '\\public\\scripts\\pendingorders.js');
 })
 
 app.get('/menu' , (req,res) => {
@@ -140,20 +152,29 @@ app.post('/login' , (req,res) => {
     console.log('here' , {username,password});
     try {
         if (req.session.authenticated && req.session.username == username && req.session.password == password) {
-            return res.status(200).json({"msg" : 1 });
+            if(req.session.isadmin)return res.status(200).json({"msg" : 1 ,"yes" : 2});
+            else return res.status(200).json({"msg" : 1 ,"yes" : 1});
         }
         let sql = `Select * from user where username="${username}"`;
         db.con.query(sql, async (error, result) => {
             let obj = Object.assign({}, result);
-
+            
             if (Object.keys(obj).length === 1) {
                 let flag = await decryptPassword(req, res, password, obj[0].password);
-            
-                if (!flag) return res.status(400).json({ msg: "password not match" });
+                // console.log(flag);
+                if (!flag) return res.status(400).json({ msg: "password not match" }); 
                 req.session.authenticated = true;
                 req.session.username = username;
                 req.session.password = password;
-                return res.status(200).json({"msg" : 1});
+                // console.log(obj[);
+                console.log('I WAS HERE !' , );
+                if(obj[0].isadmin === 1){
+                  console.log('I WAS HERE');
+                  req.session.isadmin = 1;
+                }
+                  else req.session.isadmin = 0;
+                if(req.session.isadmin)return res.status(200).json({"msg" : 1 ,"yes" : 2});
+                else return res.status(200).json({"msg" : 1 ,"yes" : 1});
             } else {
                 return res.status(400).json({ msg: "invalid user" });
             }
@@ -164,6 +185,60 @@ app.post('/login' , (req,res) => {
 })
 
 
+// admin
+// 0-> unsure
+// 1-> confirm
+// 2-> cancle
+
+// order_table
+// 0 -> pending
+// 1-> completed
+// 2-> cancled
+
+
+app.post("/pendingOrders" , (req,res) => {
+  if(req.session.authenticated && req.session.isadmin==1){
+    try{
+      let sql = "SELECT * from orders where status = 0"
+      db.con.query(sql , (err,r) => {
+        if(err) throw err;
+        let obj = Object.assign({} , r);
+        return res.status(200).send(obj);
+      })
+    }catch(err){
+      console.log(err);
+      return res.status(501).json({"msg" : "internal error"});
+    }
+    
+  }else {
+    return res.status(401).json({"msg" : "not an admin"});
+  }
+});
+
+let update_stats = (orderid,status) => {
+    let sql = `UPDATE orders set status=${status} WHERE orderid=${orderid}`;
+    return new Promise( (res,rej) => {
+      db.con.query(sql , (e,r) => {
+        if(e) rej(e);
+        console.log('done!');
+        res();
+      })
+    });
+};
+
+app.post("/confirmOrder", async (req, res) => {
+  try{
+    let sz = Object.keys(req.body).length;
+    for(let i=0; i<sz ;++i){
+      await update_stats(req.body[i].orderid , req.body[i].status);
+    }
+    return res.status(200).json({"msg" : "done"});
+  }catch(e){
+    console.log(e);
+    return res.status(501).json({"msg" : "internal error"});
+  }
+  
+});
 
 app.post("/register", async (req, res) => {;
     var { username, password } = req.body;
@@ -263,9 +338,7 @@ let ff = (req) => {
 
 //xxx
 app.post("/placeOrder", async (req, res) => {
-    
   if (req.session.authenticated) {
-   
       try {
         var  address  = req.body.address;
         //console.log(address);
