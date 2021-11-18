@@ -87,6 +87,14 @@ app.get("/profile", (req, res) => {
   return res.sendFile(__dirname + "/public/html/profile.html");
 });
 
+app.get("/logout", (req, res) => {
+  return res.sendFile(__dirname+ '/public/html/logout.html')
+})
+
+app.get("/scripts/logout.js", (req, res) => {
+  return res.sendFile(__dirname + '\\public\\scripts\\logout.js');
+})
+
 app.get("/admin", (req, res) => {
   return res.sendFile(__dirname + "/public/html/admin.html");
 });
@@ -133,7 +141,9 @@ app.get("/orderhistory", (req, res) => {
   return res.sendFile(__dirname + "\\public\\html\\orderhistory.html");
 });
 
+
 app.post("/logout", (req, res) => {
+  console.log("hello logout");
   if (req.session.authenticated) {
     req.session.destroy();
     res.clearCookie();
