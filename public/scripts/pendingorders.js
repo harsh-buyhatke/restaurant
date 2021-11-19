@@ -4,8 +4,8 @@ fetch('/pendingOrders', {
 .then(response => response.json())
 .then(pendingorders => {
     console.log(pendingorders);
-    let sz = Object.keys(pendingorders).length;
-    console.log(pendingorders);
+    let sz = Object.keys(pendingorders.data[0]).length;
+    console.log(pendingorders.data[0]);
     let place = document.getElementById('pendingorders');
     // let p = document.createElement('pre');
     // p.append(`NAME           COST`);
@@ -13,12 +13,12 @@ fetch('/pendingOrders', {
     // place.append(document.createElement("br"));
     for(let i = 0 ; i < sz ; ++i){
         const newDiv = document.createElement("div");
-        newDiv.append(`${pendingorders[i].address} :  ${pendingorders[i].item}  : ${pendingorders[i].quantity}`)
+        newDiv.append(`${pendingorders.data[0][i].address} :  ${pendingorders.data[0][i].item}  : ${pendingorders.data[0][i].quantity}`)
         const input = document.createElement("input")
         input.setAttribute("value" , 0);
         input.setAttribute("type" , "number");
-        input.setAttribute("orderid" , pendingorders[i].orderid);
-        input.setAttribute("name" , `${pendingorders[i].item}`);
+        input.setAttribute("orderid" , pendingorders.data[0][i].orderid);
+        input.setAttribute("name" , `${pendingorders.data[0][i].item}`);
         newDiv.append(input);
         place.append(newDiv);
         place.append(document.createElement("br"));

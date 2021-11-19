@@ -14,6 +14,15 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
+
+const generateResponse = (status, message, data) => {
+  return {
+      status,
+      message,
+      data
+  }
+}
+
 app.use(
   session({
     resave: false,
@@ -129,11 +138,12 @@ app.get("/menu", (req, res) => {
     db.con.query(sql, (error, result) => {
       let menu = Object.assign({}, result);
       if (error) throw error;
-      return res.status(200).send(menu);
+      return res.status(200).send(generateResponse(1, `Works`, [menu]));
+      // return res.status(200).send(menu);
     });
   } catch (e) {
     console.log(e);
-    res.status(500).json({ msg: "Problem on our side :( " });
+    res.status(500).send(generateResponse(1, `Problem on our side`, []));
   }
 });
 
@@ -147,9 +157,11 @@ app.post("/logout", (req, res) => {
   if (req.session.authenticated) {
     req.session.destroy();
     res.clearCookie();
-    res.status(200).json({ msg: "logout" });
+    return res.status(200).send(generateResponse(1, `logout`, []));
+    // res.status(200).json({ msg: "logout" });
   } else {
-    res.status(401).json({ msg: "not a loggedin user" });
+    return res.status(500).send(generateResponse(1, `not a loggedin user`, []));
+    // res.status(401).json({ msg: "not a loggedin user" });
   }
 });
 
@@ -162,17 +174,29 @@ app.post("/login", (req, res) => {
       req.session.username == username &&
       req.session.password == password
     ) {
-      if (req.session.isadmin) return res.status(200).json({ msg: 1, yes: 2 });
-      else return res.status(200).json({ msg: 1, yes: 1 });
-    }
+      if (req.session.isadmin){
+        // important !!!!!!
+        return res.status(200).send(generateResponse(1, `admin verification successfull`, [{yes:2}]));
+        // return res.status(200).json({ msg: 1, yes: 2 });
+      }
+      else{
+        return res.status(200).send(generateResponse(1, `user vericifation successsfull`, [{yes:1}]));
+        // return res.status(200).json({ msg: 1, yes: 1 });
+      }
+   }
     let sql = `Select * from user where username="${username}"`;
     db.con.query(sql, async (error, result) => {
       let obj = Object.assign({}, result);
+      console.log('nani',obj);
 
       if (Object.keys(obj).length === 1) {
         let flag = await decryptPassword(req, res, password, obj[0].password);
-        // console.log(flag);
-        if (!flag) return res.status(400).json({ msg: "password not match" });
+       console.log('nani');
+
+        if (!flag){
+          return res.status(400).send(generateResponse(1, `password not match`, []));
+          // return res.status(400).json({ msg: "password not match" });
+        }
         req.session.authenticated = true;
         req.session.username = username;
         req.session.password = password;
@@ -182,15 +206,22 @@ app.post("/login", (req, res) => {
           console.log("I WAS HERE");
           req.session.isadmin = 1;
         } else req.session.isadmin = 0;
-        if (req.session.isadmin)
-          return res.status(200).json({ msg: 1, yes: 2 });
-        else return res.status(200).json({ msg: 1, yes: 1 });
+        if (req.session.isadmin){
+          return res.status(200).send(generateResponse(1, `admin verification successfull`, [{yes : 2}]));
+          // return res.status(200).json({ msg: 1, yes: 2 });
+        }
+        else{
+          return res.status(200).send(generateResponse(1, `user verification successfull`, [{yes : 1}]));
+          // return res.status(200).json({ msg: 1, yes: 1 });
+        }
       } else {
-        return res.status(400).json({ msg: "invalid user" });
+        return res.status(400).send(generateResponse(1, `invalid user`, []));
+        // return res.status(400).json({ msg: "invalid user" });
       }
     });
   } catch (err) {
-    return res.status(500).json({ msg: `${err}` });
+    return res.status(500).send(generateResponse(1, `${err}`, []));
+    // return res.status(500).json({ msg: `${err}` });
   }
 });
 
@@ -211,13 +242,16 @@ app.post("/pendingOrders", (req, res) => {
       db.con.query(sql, (err, r) => {
         if (err) throw err;
         let obj = Object.assign({}, r);
-        return res.status(200).send(obj);
+        return res.status(200).send(generateResponse(1, `pendingOrders resuly sent successfully`, [obj]));
+        // return res.status(200).send(obj);
       });
     } catch (err) {
       console.log(err);
-      return res.status(501).json({ msg: "internal error" });
+      return res.status(500).send(generateResponse(1, `${err}`, []));
+      // return res.status(501).json({ msg: "internal error" });
     }
   } else {
+    return res.status(500).send(generateResponse(1, `not an admin`, []));
     return res.status(401).json({ msg: "not an admin" });
   }
 });
@@ -237,9 +271,10 @@ app.post("/additem", (req, res) => {
     let sql = `Select * from items where name = "${name}"`;
     db.con.query(sql, (e, re) => {
       if (e) {
-        return res.status(501).json({
-          msg: "internal error",
-        });
+        return res.status(500).send(generateResponse(1, `${err}`, []));
+        // return res.status(501).json({
+        //   msg: "internal error",
+        // });
       }
       let obj = Object.assign({}, re);
       console.log("object", obj);
@@ -248,18 +283,21 @@ app.post("/additem", (req, res) => {
         console.log(sql1);
         db.con.query(sql1, (error, result) => {
           if (error) throw error;
-          return res.status(200).json({ msg: "inserted successfully" });
+          return res.status(500).send(generateResponse(1, `inserted successfully`, []));
+          // return res.status(200).json({ msg: "inserted successfully" });
         });
       } else {
         let sql1 = `Update items set cost= "${cost}" where name = "${name}" `;
         db.con.query(sql1, (error, result) => {
           if (error) throw error;
-          return res.status(200).json({ msg: "updated successfully" });
+          return res.status(200).send(generateResponse(1, `updated successfully`, []));
+          // return res.status(200).json({ msg: "updated successfully" });
         });
       }
     });
   } catch (err) {
-    return res.status(501).json({ msg: "internal error" });
+    return res.status(500).send(generateResponse(1, `${err}`, []));
+    // return res.status(501).json({ msg: "internal error" });
   }
 });
 
@@ -280,10 +318,12 @@ app.post("/confirmOrder", async (req, res) => {
     for (let i = 0; i < sz; ++i) {
       await update_stats(req.body[i].orderid, req.body[i].status);
     }
-    return res.status(200).json({ msg: "done" });
+    return res.status(200).send(generateResponse(1, `done`, []));
+    // return res.status(200).json({ msg: "done" });
   } catch (e) {
     console.log(e);
-    return res.status(501).json({ msg: "internal error" });
+    return res.status(500).send(generateResponse(1, `${e}`, []));
+    // return res.status(501).json({ msg: "internal error" });
   }
 });
 
@@ -292,12 +332,15 @@ app.post("/register", async (req, res) => {
   try {
     if (!validEmail(username)) {
       console.log("HERE", username);
-      return res.status(400).json({ msg: "enter email correctly" });
+      return res.status(400).send(generateResponse(1, `enter email correctly`, []));
+      // return res.status(400).json({ msg: "enter email correctly" });
     }
     let sql = `Select * from user where username="${username}"`;
     db.con.query(sql, async (error, result) => {
-      if (error) res.status(501).json({ msg: `${error}` });
-
+      if (error){
+        return res.status(500).send(generateResponse(1, `${error}`, []));
+        // res.status(501).json({ msg: `${error}` });
+      }
       let obj = Object.assign({}, result);
 
       if (Object.keys(obj).length === 0) {
@@ -305,18 +348,25 @@ app.post("/register", async (req, res) => {
         var sql = `INSERT into user (username,password) values ("${username}","${password}")`;
         try {
           db.con.query(sql, (er, result) => {
-            if (er) throw res.status(501).json({ msg: `${er}` });
-            return res.status(400).json({ msg: "valid request" });
+            if (err){
+              return res.status(500).send(generateResponse(1, `${err}`, []));
+              // res.status(501).json({ msg: `${er}` });
+            }
+            return res.status(400).send(generateResponse(1, `invalid request`, []));
+            // return res.status(400).json({ msg: "invalid request" });
           });
         } catch (err) {
-          res.status(501).json({ msg: `${er}` });
+          return res.status(501).send(generateResponse(1, `${err}`, []));
+          // res.status(501).json({ msg: `${err}` });
         }
       } else {
-        return res.status(400).json({ msg: "existing user" });
+        return res.status(400).send(generateResponse(1, `existing user`, []));
+        // return res.status(400).json({ msg: "existing user" });
       }
     });
   } catch (err) {
-    res.status(500).json({ msg: `${err}` });
+    return res.status(500).send(generateResponse(1, `${err}`, []));
+    // res.status(500).json({ msg: `${err}` });
   }
 });
 
@@ -380,16 +430,24 @@ app.post("/placeOrder", async (req, res) => {
     try {
       var address = req.body.address;
       //console.log(address);
-      if (address === null || address === "")
-        res.status(401).json({ msg: "enter address cannot be empty" });
+      if (address === null || address === ""){
+        return res.status(400).send(generateResponse(1, `enter address cannot be empty`, []));
+        // res.status(401).json({ msg: "enter address cannot be empty" });
+      }
+        
       //console.log(req.body, "in lower function");
       let x_x = await ff(req);
-      if (x_x) return res.status(200).json({ msg: "waiting for confirmation" });
+      if (x_x){
+        return res.status(200).send(generateResponse(1, `waiting for confirmation`, []));                
+        // return res.status(200).json({ msg: "waiting for confirmation" });
+      }
     } catch (err) {
-      return res.status(501).json({ msg: err });
+      return res.status(500).send(generateResponse(1, `${err}`, []));
+      // return res.status(501).json({ msg: err });
     }
   } else {
-    res.status(401).json({ msg: "first log in" });
+    return res.status(400).send(generateResponse(1, `first log in`, []));
+    // res.status(401).json({ msg: "first log in" });
   }
 });
 
@@ -402,16 +460,21 @@ app.post("/orderHistory", (req, res) => {
       console.log(sql);
       db.con.query(sql, (error, result) => {
         if (error) {
-          return res.status(501).json({ msg: "internal error" });
+          return res.status(501).send(generateResponse(1, `internal error`, []));
+          // return res.status(501).json({ msg: "internal error" });
         } else {
           let obj = Object.assign({}, result);
-          res.status(200).send(obj);
+          return res.status(200).send(generateResponse(1, `data recieved from server`, [obj]));
+          // res.status(200).send(obj);
         }
       });
     } catch (err) {
-      return req.status(501).json({ msg: "internal error" });
+      console.log(err);
+      return res.status(500).send(generateResponse(1, `internal error`, []));
+      // return req.status(501).json({ msg: "internal error" });
     }
   } else {
-    return res.status(401).json({ msg: "user not logged in" });
+    return res.status(200).send(generateResponse(1, `user not logged in`, []));
+    // return res.status(401).json({ msg: "user not logged in" });
   }
 });

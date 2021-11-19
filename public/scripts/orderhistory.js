@@ -6,7 +6,7 @@ fetch('/orderHistory', {
     .then(orderhistory => {
        // console.log(orderhistory[0]);
     // console.log(orderhistory[0]);
-    let sz = Object.keys(orderhistory).length;
+    let sz = Object.keys(orderhistory.data[0]).length;
     let place = document.getElementById('orderhistory');
     // let p = document.createElement('pre');
     // p.append(`NAME           COST`);
@@ -14,10 +14,10 @@ fetch('/orderHistory', {
     // place.append(document.createElement("br"));
     for(let i = 0 ; i < sz ; ++i){
         const newDiv = document.createElement("div");
-        newDiv.append(`${orderhistory[i].address} : ${orderhistory[i].item} :  ${orderhistory[i].quantity} `)
+        newDiv.append(`${orderhistory.data[0][i].address} : ${orderhistory.data[0][i].item} :  ${orderhistory.data[0][i].quantity} `)
         const input = document.createElement("input")
         input.setAttribute("type" , "number");
-        input.setAttribute("name" , `${orderhistory[i].item}`);
+        input.setAttribute("name" , `${orderhistory.data[0][i].item}`);
         
         place.append(newDiv);
         place.append(document.createElement("br"));
