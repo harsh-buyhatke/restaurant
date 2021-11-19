@@ -12,10 +12,11 @@ function login(){
         }
     }).then(x => x.json())
     .then(response => {
-        console.log(response)
-        if(response["yes"] === 1){
+        console.log('what',response);
+        console.log("huh ? " , response.data[0]["yes"]);
+        if(response.data[0]["yes"] === 1){
             window.location = '/profile'
-        }else if(response["yes"] === 2){
+        }else if(response.data[0]["yes"] === 2){
             window.location = '/admin'
         }
     })

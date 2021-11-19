@@ -4,7 +4,7 @@ fetch('/menu', {
 .then(response => response.json())
 .then(menu => {
     // console.log(menu[0]);
-    let sz = Object.keys(menu).length;
+    let sz = Object.keys(menu.data[0]).length;
     let place = document.getElementById('menu');
     // let p = document.createElement('pre');
     // p.append(`NAME           COST`);
@@ -12,10 +12,10 @@ fetch('/menu', {
     // place.append(document.createElement("br"));
     for(let i = 0 ; i < sz ; ++i){
         const newDiv = document.createElement("div");
-        newDiv.append(`${menu[i].name} :  ${menu[i].cost} `)
+        newDiv.append(`${menu.data[0][i].name} :  ${menu.data[0][i].cost} `)
         const input = document.createElement("input")
         input.setAttribute("type" , "number");
-        input.setAttribute("name" , `${menu[i].name}`);
+        input.setAttribute("name" , `${menu.data[0][i].name}`);
         newDiv.append(input);
         place.append(newDiv);
         place.append(document.createElement("br"));
