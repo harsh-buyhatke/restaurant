@@ -1,4 +1,4 @@
-fetch('/pendingOrders', {
+fetch('/api/pendingOrders', {
     method: 'POST',
 })
 .then(response => response.json())

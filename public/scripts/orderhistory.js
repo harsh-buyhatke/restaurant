@@ -1,5 +1,5 @@
 console.log("js file called");
-fetch('/orderHistory', {
+fetch('/api/orderHistory', {
     method: 'POST',
 })
 .then(response => response.json())

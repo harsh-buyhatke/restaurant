@@ -4,7 +4,7 @@ const submit=() => {
     let cost = document.getElementById("2").value;
 
     let obj = { name, cost };
-    fetch('/additem', {
+    fetch('/api/additem', {
         method: 'POST',
         body: JSON.stringify(obj),
         headers: {

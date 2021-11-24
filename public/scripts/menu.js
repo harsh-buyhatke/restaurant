@@ -1,4 +1,4 @@
-fetch('/menu', {
+fetch('/api/menu', {
     method: 'GET',
 })
 .then(response => response.json())
@@ -31,7 +31,7 @@ function placeOrder(){
         obj[orders[i].name] = orders[i].value;
     }
     console.log(obj);
-    fetch('/placeOrder', {
+    fetch('/api/placeOrder', {
         method: 'POST',
 
         body: JSON.stringify(obj),

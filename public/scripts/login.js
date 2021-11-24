@@ -4,7 +4,7 @@ function login(){
     console.log(username);
     console.log(password);
     let data = {username , password};
-    fetch('/login', {
+    fetch('/api/login', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: {

@@ -4,7 +4,7 @@ function register(){
     console.log(username);
     console.log(password);
     let data = {username , password};
-    fetch('/register', {
+    fetch('/api/register', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: {
