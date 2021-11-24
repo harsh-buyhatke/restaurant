@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require("./database");
 var validator = require("validator");
 const crypto = require("crypto");
+const { stringify } = require("querystring");
 
 const SECRETKEY = "YMLMGAMK";
 const encryptPassword = async (req, res, password) => {
@@ -124,6 +125,7 @@ router.post("/login", (req, res) => {
         }
         req.session.authenticated = true;
         req.session.username = username;
+        req.session.uid = obj[0].uid;
         req.session.password = password;
         // console.log(obj[);
         console.log("I WAS HERE !");
@@ -179,7 +181,7 @@ router.post("/pendingOrders", (req, res) => {
         return res
           .status(200)
           .send(
-            generateResponse(1, `pendingOrders resuly sent successfully`, [obj])
+            generateResponse(1, `pendingOrders results sent successfully`, [obj])
           );
         // return res.status(200).send(obj);
       });
@@ -312,20 +314,48 @@ const dbInsertItem = (sql) => {
   });
 };
 
-let ff = (req) => {
+
+const getCost = (key) => {
+  return new Promise((res, rej) => {
+    console.log('key', key);
+    let sql = `SELECT cost from items where name = '${key}' `;
+    db.con.query(sql, (err, result) => {
+      console.log('result', result[0].cost);
+      if (err) rej(0);
+      res(result[0].cost);
+    })
+  })
+}
+
+let ff = async (req) => {
+  console.log('xx');
   return new Promise(async (res, rej) => {
     var address = req.body.address;
     console.log(req.body);
+    let obj = {};
+    let tot = 0;
     for (var key in req.body) {
       if (key === "address") continue;
-      if (req.body[key] > 0) {
-        let sql = `INSERT INTO orders(address,item,quantity,username,status) values("${address}","${key}","${req.body[key]}","${req.session.username}","0")`;
-        console.log(sql);
-        let x = await dbInsertItem(sql);
-        if (!x) rej(0);
-      }
+      obj[key] = req.body[key];
+      let item_cost = await getCost(key);
+      tot += req.body[key] * item_cost;
+      // if (req.body[key] > 0) {
+      //   let sql = `INSERT INTO orders(address,item,quantity,username,status) values("${address}","${key}","${req.body[key]}","${req.session.username}","0")`;
+      //   console.log(sql);
+      //   let x = await dbInsertItem(sql);
+      //   if (!x) rej(0);
+      // }
     }
-    res(1);
+    console.log('TOTAL', tot);
+    console.log('xxx', JSON.stringify(obj));
+    let sql = `INSERT INTO orders(address , items , total , uid , status) values('${address}' , '${JSON.stringify(obj)}' ,'${tot}' , '${req.session.uid}' , 0)`;
+    db.con.query(sql, (error, result) => {
+      if (error) {
+        console.log(error);
+        rej(0);
+      }
+      res(1);
+    });
   }).catch((error) => {
     rej(error);
   });
@@ -365,9 +395,9 @@ router.post("/placeOrder", async (req, res) => {
 router.post("/orderHistory", (req, res) => {
   console.log("order history");
   if (req.session.authenticated) {
-    var username = req.session.username;
+    var uid = req.session.uid;
     try {
-      let sql = `Select * from orders where username="${username}" and status=2`;
+      let sql = `Select * from orders where uid="${uid}" and status=2`;
       console.log(sql);
       db.con.query(sql, (error, result) => {
         if (error) {

@@ -13,7 +13,7 @@ fetch('/api/pendingOrders', {
         // place.append(document.createElement("br"));
         for (let i = 0; i < sz; ++i) {
             const newDiv = document.createElement("div");
-            newDiv.append(`${pendingorders.data[0][i].address} :  ${pendingorders.data[0][i].item}  : ${pendingorders.data[0][i].quantity}`)
+            newDiv.append(`${pendingorders.data[0][i].address} :  ${pendingorders.data[0][i].items}  : ${pendingorders.data[0][i].total}`)
             const input = document.createElement("input")
             input.setAttribute("value", 0);
             input.setAttribute("type", "number");
@@ -40,7 +40,7 @@ function confirmOrder() {
     // console.log(orders[1]);
     // console.log(orders[2]);
     // console.log(orders[3]);
-    fetch('/confirmOrder', {
+    fetch('/api/confirmOrder', {
         method: 'POST',
 
         body: JSON.stringify(obj),
