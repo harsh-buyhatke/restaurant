@@ -24,7 +24,7 @@ const validEmail = (req, res, next) => {
   } else {
     return res
       .status(400)
-      .send(generateResponse(1, `enter email correctly`, []));
+      .send(generateResponse(-1, `enter email correctly`, []));
   }
 };
 
@@ -37,7 +37,7 @@ function checkPassword(req, res, next) {
       .status(400)
       .send(
         generateResponse(
-          1,
+          -2,
           `password should have upper case,lower case , special and a digit`,
           []
         )
@@ -119,7 +119,7 @@ router.post("/login", (req, res) => {
         if (!flag) {
           return res
             .status(400)
-            .send(generateResponse(1, `password not match`, []));
+            .send(generateResponse(-1, `password not match`, []));
           // return res.status(400).json({ msg: "password not match" });
         }
         req.session.authenticated = true;
@@ -149,7 +149,7 @@ router.post("/login", (req, res) => {
           // return res.status(200).json({ msg: 1, yes: 1 });
         }
       } else {
-        return res.status(400).send(generateResponse(1, `invalid user`, []));
+        return res.status(400).send(generateResponse(-2, `invalid user`, []));
         // return res.status(400).json({ msg: "invalid user" });
       }
     });
@@ -294,7 +294,7 @@ router.post("/register", validEmail, checkPassword, async (req, res) => {
           // res.status(501).json({ msg: `${err}` });
         }
       } else {
-        return res.status(400).send(generateResponse(1, `existing user`, []));
+        return res.status(400).send(generateResponse(-3, `existing user`, []));
         // return res.status(400).json({ msg: "existing user" });
       }
     });
@@ -318,10 +318,12 @@ let ff = (req) => {
     console.log(req.body);
     for (var key in req.body) {
       if (key === "address") continue;
-      let sql = `INSERT INTO orders(address,item,quantity,username,status) values("${address}","${key}","${req.body[key]}","${req.session.username}","0")`;
-      console.log(sql);
-      let x = await dbInsertItem(sql);
-      if (!x) rej(0);
+      if (req.body[key] > 0) {
+        let sql = `INSERT INTO orders(address,item,quantity,username,status) values("${address}","${key}","${req.body[key]}","${req.session.username}","0")`;
+        console.log(sql);
+        let x = await dbInsertItem(sql);
+        if (!x) rej(0);
+      }
     }
     res(1);
   }).catch((error) => {
@@ -338,7 +340,7 @@ router.post("/placeOrder", async (req, res) => {
       if (address === null || address === "") {
         return res
           .status(400)
-          .send(generateResponse(1, `enter address cannot be empty`, []));
+          .send(generateResponse(-1, `enter address cannot be empty`, []));
         // res.status(401).json({ msg: "enter address cannot be empty" });
       }
 
@@ -355,7 +357,7 @@ router.post("/placeOrder", async (req, res) => {
       // return res.status(501).json({ msg: err });
     }
   } else {
-    return res.status(400).send(generateResponse(1, `first log in`, []));
+    return res.status(400).send(generateResponse(-2, `first log in`, []));
     // res.status(401).json({ msg: "first log in" });
   }
 });

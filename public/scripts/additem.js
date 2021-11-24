@@ -1,5 +1,5 @@
 
-const submit=() => {
+const submit = () => {
     let name = document.getElementById("1").value;
     let cost = document.getElementById("2").value;
 
@@ -10,7 +10,10 @@ const submit=() => {
         headers: {
             'Content-type': 'application/json; charset=UTF-8'
         }
-    }).then(response => console.log(response));
+    }).then(() => {
+        window.alert('Item added Successfully');
+        location.reload();
+    });
 
 }
 
