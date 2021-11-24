@@ -3,9 +3,23 @@ const router = express.Router();
 const db = require("./database");
 var validator = require("validator");
 const crypto = require("crypto");
+var mysql = require("mysql");
 const { stringify } = require("querystring");
 
 const SECRETKEY = "YMLMGAMK";
+
+const sqlQuery = (query, params_arr = []) => {
+  return new Promise(function (resolve, reject) {
+    db.con.query(mysql.format(query, params_arr), function (err, results) {
+      if (!err) {
+        resolve(results);
+      } else {
+        reject(err);
+      }
+    });
+  });
+};
+
 const encryptPassword = async (req, res, password) => {
   try {
     const hashedPassword = await crypto
@@ -54,15 +68,13 @@ const generateResponse = (status, message, data) => {
   };
 };
 
-router.get("/menu", (req, res) => {
+router.get("/menu", async (req, res) => {
   try {
-    let sql = "SELECT * from items";
-    db.con.query(sql, (error, result) => {
-      let menu = Object.assign({}, result);
-      if (error) throw error;
-      return res.status(200).send(generateResponse(1, `Works`, [menu]));
-      // return res.status(200).send(menu);
-    });
+    let result = await sqlQuery(`Select * from items `);
+    let obj = Object.assign({}, result);
+    return res
+      .status(200)
+      .send(generateResponse(1, `data recieved from server`, [obj]));
   } catch (e) {
     console.log(e);
     res.status(500).send(generateResponse(1, `Problem on our side`, []));
@@ -181,7 +193,9 @@ router.post("/pendingOrders", (req, res) => {
         return res
           .status(200)
           .send(
-            generateResponse(1, `pendingOrders results sent successfully`, [obj])
+            generateResponse(1, `pendingOrders results sent successfully`, [
+              obj,
+            ])
           );
         // return res.status(200).send(obj);
       });
@@ -314,21 +328,20 @@ const dbInsertItem = (sql) => {
   });
 };
 
-
 const getCost = (key) => {
   return new Promise((res, rej) => {
-    console.log('key', key);
+    console.log("key", key);
     let sql = `SELECT cost from items where name = '${key}' `;
     db.con.query(sql, (err, result) => {
-      console.log('result', result[0].cost);
+      console.log("result", result[0].cost);
       if (err) rej(0);
       res(result[0].cost);
-    })
-  })
-}
+    });
+  });
+};
 
 let ff = async (req) => {
-  console.log('xx');
+  console.log("xx");
   return new Promise(async (res, rej) => {
     var address = req.body.address;
     console.log(req.body);
@@ -346,9 +359,11 @@ let ff = async (req) => {
       //   if (!x) rej(0);
       // }
     }
-    console.log('TOTAL', tot);
-    console.log('xxx', JSON.stringify(obj));
-    let sql = `INSERT INTO orders(address , items , total , uid , status) values('${address}' , '${JSON.stringify(obj)}' ,'${tot}' , '${req.session.uid}' , 0)`;
+    console.log("TOTAL", tot);
+    console.log("xxx", JSON.stringify(obj));
+    let sql = `INSERT INTO orders(address , items , total , uid , status) values('${address}' , '${JSON.stringify(
+      obj
+    )}' ,'${tot}' , '${req.session.uid}' , 0)`;
     db.con.query(sql, (error, result) => {
       if (error) {
         console.log(error);
@@ -392,27 +407,37 @@ router.post("/placeOrder", async (req, res) => {
   }
 });
 
-router.post("/orderHistory", (req, res) => {
+router.post("/orderHistory", async (req, res) => {
   console.log("order history");
   if (req.session.authenticated) {
     var uid = req.session.uid;
     try {
-      let sql = `Select * from orders where uid="${uid}" and status=2`;
-      console.log(sql);
-      db.con.query(sql, (error, result) => {
-        if (error) {
-          return res
-            .status(501)
-            .send(generateResponse(1, `internal error`, []));
-          // return res.status(501).json({ msg: "internal error" });
-        } else {
-          let obj = Object.assign({}, result);
-          return res
-            .status(200)
-            .send(generateResponse(1, `data recieved from server`, [obj]));
-          // res.status(200).send(obj);
-        }
-      });
+      // let sql = `Select * from orders where uid=? and status=2`,[uid];
+      // let sql =  `SELECT user_id, blisting_status FROM ${bListing} WHERE b_listing_id = ?`, [ b_listing_id,]
+      // console.log(sql);
+      let result = await sqlQuery(
+        `Select * from orders where uid=? and status=2`,
+        [uid]
+      );
+      let obj = Object.assign({}, result);
+      return res
+        .status(200)
+        .send(generateResponse(1, `data recieved from server`, [obj]));
+
+      // db.con.query(sql, (error, result) => {
+      //   if (error) {
+      //     return res
+      //       .status(501)
+      //       .send(generateResponse(1, `internal error`, []));
+      //     // return res.status(501).json({ msg: "internal error" });
+      //   } else {
+      // let obj = Object.assign({}, result);
+      // return res
+      //   .status(200)
+      //   .send(generateResponse(1, `data recieved from server`, [obj]));
+      //     // res.status(200).send(obj);
+      //   }
+      // });
     } catch (err) {
       console.log(err);
       return res.status(500).send(generateResponse(1, `internal error`, []));
@@ -428,3 +453,5 @@ module.exports = router;
 
 // api
 // --file
+// `SELECT user_id, blisting_status FROM ${bListing} WHERE b_listing_id = ?`, [ b_listing_id,]
+// let buyerDetails = await sqlQuery();
