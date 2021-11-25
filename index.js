@@ -1,4 +1,6 @@
 const express = require("express");
+const process = require('process');
+var fs = require('fs');
 
 const app = express();
 
@@ -50,6 +52,10 @@ app.use('/api', router);
 //     })
 // };
 
+process.on('uncaughtException', (error, source) => {
+  console.log("something to see that is not figured");
+});
+ 
 app.get("/", (req, res) => {
   return res.sendFile(__dirname + "\\public\\html\\index.html");
 });
