@@ -25,12 +25,17 @@ fetch('/api/menu', {
 
 function placeOrder() {
     let orders = document.getElementsByTagName('input');
+    let addressvalue = document.getElementById('address').value;
+    
     let sz = orders.length;
     let obj = {};
     for (let i = 0; i < sz; ++i) {
         obj[orders[i].name] = orders[i].value;
     }
+    if (obj['address']!==null && obj['address']!=="")
+        addressvalue = obj['address'];
     console.log(obj);
+    obj['address'] = addressvalue;
     fetch('/api/placeOrder', {
         method: 'POST',
 

@@ -87,6 +87,21 @@ router.get("/menu", isLoggedIn,async (req, res) => {
   }
 });
 
+router.get("/availableaddress",isLoggedIn,async(req, res) => {
+  let uid = req.session.uid;
+  try {
+    let result = await sqlQuery(`select * from address where uid=?`, [uid]);
+    let obj = Object.assign({}, result);
+    return res.status(200).send(generateResponse(1, "fetched successfully", obj));
+  }
+  catch (e) {
+    return res.status(501).send(generateResponse(-1, e, []));
+  }
+  
+  
+  return res.status(200).send({});
+});
+
 router.post("/logout", isLoggedIn,(req, res) => {
   console.log("hello logout");
   if (req.session.authenticated) {
@@ -354,7 +369,16 @@ let ff = async (req) => {
     let obj = {};
     let tot = 0;
     for (var key in req.body) {
-      if (key === "address") continue;
+      if (key === "address") {
+        try {
+          let result = await sqlQuery(`insert into address (uid,address) values (?,?)`, [req.session.uid, req.body[key]]);
+        }
+        catch (e) {
+          console.log(e);
+        }
+        continue;
+        
+      };
       obj[key] = req.body[key];
       let item_cost = await getCost(key);
       tot += req.body[key] * item_cost;

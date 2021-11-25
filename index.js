@@ -58,6 +58,10 @@ app.get("/login", (req, res) => {
   return res.sendFile(__dirname + "/public/html/login.html");
 });
 
+app.get("/scripts/selectaddress.js", (req, res) => {
+  return res.sendFile(__dirname + "/public/scripts/selectaddress.js");
+});
+
 app.get("/register", (req, res) => {
   return res.sendFile(__dirname + "/public/html/register.html");
 });
