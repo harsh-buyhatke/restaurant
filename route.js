@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const db = require("./database");
+const db = require("./config/database");
 var validator = require("validator");
 const crypto = require("crypto");
 var mysql = require("mysql");
@@ -19,6 +19,12 @@ const sqlQuery = (query, params_arr = []) => {
     });
   });
 };
+
+const isLoggedIn = (req,res,next) => {
+  if (req.session.authenticated)
+    return next();
+  return res.status(400).generateResponse(-1, `not a logged in user`, []);
+}
 
 const encryptPassword = async (req, res, password) => {
   try {
@@ -68,7 +74,7 @@ const generateResponse = (status, message, data) => {
   };
 };
 
-router.get("/menu", async (req, res) => {
+router.get("/menu", isLoggedIn,async (req, res) => {
   try {
     let result = await sqlQuery(`Select * from items `);
     let obj = Object.assign({}, result);
@@ -81,7 +87,7 @@ router.get("/menu", async (req, res) => {
   }
 });
 
-router.post("/logout", (req, res) => {
+router.post("/logout", isLoggedIn,(req, res) => {
   console.log("hello logout");
   if (req.session.authenticated) {
     req.session.destroy();
@@ -183,7 +189,7 @@ router.post("/login", (req, res) => {
 // 1-> completed
 // 2-> cancled
 
-router.post("/pendingOrders", (req, res) => {
+router.post("/pendingOrders", isLoggedIn,(req, res) => {
   if (req.session.authenticated && req.session.isadmin == 1) {
     try {
       let sql = "SELECT * from orders where status = 0";
@@ -210,7 +216,7 @@ router.post("/pendingOrders", (req, res) => {
   }
 });
 
-router.post("/additem", (req, res) => {
+router.post("/additem", isLoggedIn,(req, res) => {
   console.log(req.body);
   var { name, cost } = req.body;
   try {
@@ -262,7 +268,7 @@ let update_stats = (orderid, status) => {
   });
 };
 
-router.post("/confirmOrder", async (req, res) => {
+router.post("/confirmOrder", isLoggedIn,async (req, res) => {
   try {
     let sz = Object.keys(req.body).length;
     for (let i = 0; i < sz; ++i) {
@@ -377,7 +383,7 @@ let ff = async (req) => {
 };
 
 //xxx
-router.post("/placeOrder", async (req, res) => {
+router.post("/placeOrder",isLoggedIn, async (req, res) => {
   if (req.session.authenticated) {
     try {
       var address = req.body.address;
@@ -407,7 +413,7 @@ router.post("/placeOrder", async (req, res) => {
   }
 });
 
-router.post("/orderHistory", async (req, res) => {
+router.post("/orderHistory",isLoggedIn,async (req, res) => {
   console.log("order history");
   if (req.session.authenticated) {
     var uid = req.session.uid;
